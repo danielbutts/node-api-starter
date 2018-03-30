@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUsers } = require('../controllers/userController');
+const { getUsers, createUser } = require('../controllers/userController');
 const logger = require('winston');
 
 const router = express.Router();
@@ -11,6 +11,18 @@ router.get('/', async (req, res) => {
     res.send({ users });
   } catch (error) {
     logger.error(error);
+  }
+});
+
+/* Create new user. */
+router.post('/', async (req, res) => {
+  try {
+    console.log(req.body);
+    const users = await createUser(req.body);
+    res.send({ users });
+  } catch (error) {
+    logger.error(error);
+    res.status(400).send({ error: error.message });
   }
 });
 
