@@ -1,5 +1,5 @@
 const express = require('express');
-const { getUsers, createUser } = require('../controllers/userController');
+const { getUsers, getUserById, createUser } = require('../controllers/userController');
 const logger = require('winston');
 
 const router = express.Router();
@@ -11,6 +11,19 @@ router.get('/', async (req, res) => {
     res.send({ users });
   } catch (error) {
     logger.error(error);
+    res.status(400).send({ error: error.message });
+  }
+});
+
+/* GET user listing. */
+router.get('/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await getUserById(userId);
+    res.send({ user });
+  } catch (error) {
+    logger.error(error);
+    res.status(400).send({ error: error.message });
   }
 });
 

@@ -11,8 +11,6 @@
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "dotenv": "^5.0.1",
-    "ejs": "~2.5.7",
-    "eslint": "^4.19.1",
     "express": "~4.16.0",
     "http-errors": "~1.6.2",
     "joi": "^13.1.2",
@@ -22,6 +20,7 @@
     "winston": "^2.4.1"
   },
   "devDependencies": {
+    "eslint": "^4.19.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.9.0",
     "nodemon": "^1.17.2"

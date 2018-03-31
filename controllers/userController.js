@@ -12,22 +12,24 @@ const getUsers = async () => {
   } catch (error) {
     connection.release();
     logger.error('query error', error.message, error.stack);
+    throw error;
   }
-  return undefined;
 };
 
 const getUserById = async (userId) => {
   const connection = await getConnection();
-
+  console.log('userId', userId, parseInt(userId, 10));
   try {
-    const result = await connection.query('SELECT * FROM users where user_id = $1 limit 1', [userId]);
+    if (Number.isNaN(userId)) throw new Error('UserId must be a number');
+    const result = await connection.query('SELECT * FROM users where id = $1 limit 1', [parseInt(userId, 10)]);
+    if (result.rows.length === 0) throw new Error(`User ${userId} not found.`);
     connection.release();
     return result.rows[0];
   } catch (error) {
     connection.release();
     logger.error('query error', error.message, error.stack);
+    throw error;
   }
-  return undefined;
 };
 
 const createUser = async (user) => {
@@ -44,7 +46,7 @@ const createUser = async (user) => {
 
     const validUser = await Joi.validate(user, schema, (err, value) => {
       if (err) {
-        console.log(err);
+        logger.error(err);
         throw err;
       }
       return value;
