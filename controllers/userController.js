@@ -2,23 +2,35 @@ const userService = require('../services/userService');
 const logger = require('winston');
 const Joi = require('joi');
 
+const USER_ID_SCHEMA = {
+  userId: Joi.number().min(0).precision(0)
+    .required(),
+};
+
 const getUsers = async () => {
   const users = await userService.getUsers();
   return users;
 };
 
 const getUserById = async (userId) => {
-  const schema = {
-    userId: Joi.string().alphanum().min(3).max(30)
-      .required(),
-  };
-  const { error, value: id } = Joi.validate({ userId }, schema);
+  const { error, value } = Joi.validate({ userId }, USER_ID_SCHEMA);
   if (error) {
     logger.error(error.message);
     throw error;
   }
 
-  const user = await userService.getUserById(id);
+  const user = await userService.getUserById(value.userId);
+  return user;
+};
+
+const deleteUser = async (userId) => {
+  const { error, value } = Joi.validate({ userId }, USER_ID_SCHEMA);
+  if (error) {
+    logger.error(error.message);
+    throw error;
+  }
+
+  const user = await userService.deleteUser(value.userId);
   return user;
 };
 
@@ -31,8 +43,7 @@ const createUser = async (user) => {
       firstName: Joi.string().regex(/^[a-zA-Z]{3,30}$/).required(),
       lastName: Joi.string().regex(/^[a-zA-Z]{3,30}$/).required(),
       email: Joi.string().email(),
-    })
-      .and('username', 'password', 'firstName', 'lastName', 'email');
+    }).and('username', 'password', 'firstName', 'lastName', 'email');
 
     const { error: err, value: validUser } = Joi.validate(user, schema);
     if (err) throw err;
@@ -52,4 +63,5 @@ module.exports = {
   getUsers,
   getUserById,
   createUser,
+  deleteUser,
 };

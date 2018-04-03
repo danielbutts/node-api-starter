@@ -4,7 +4,7 @@ const logger = require('winston');
 const getUserByName = async (name) => {
   const connection = await getConnection();
   try {
-    const result = await connection.query('SELECT * FROM users where username = $1 limit 1', [name]);
+    const result = await connection.query('SELECT * FROM users WHERE username = $1 limit 1', [name]);
     connection.release();
     if (result.rows.length === 0) return undefined;
     return result.rows[0];
@@ -18,7 +18,21 @@ const getUserByName = async (name) => {
 const getUserById = async (id) => {
   const connection = await getConnection();
   try {
-    const result = await connection.query('SELECT * FROM users where id = $1 limit 1', [id]);
+    const result = await connection.query('SELECT * FROM users WHERE id = $1 limit 1', [id]);
+    connection.release();
+    if (result.rows.length === 0) return undefined;
+    return result.rows[0];
+  } catch (err) {
+    connection.release();
+    logger.error(err.message);
+    throw err;
+  }
+};
+
+const deleteUser = async (id) => {
+  const connection = await getConnection();
+  try {
+    const result = await connection.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
     connection.release();
     if (result.rows.length === 0) return undefined;
     return result.rows[0];
@@ -73,4 +87,5 @@ module.exports = {
   getUsers,
   getUserById,
   createUser,
+  deleteUser,
 };
