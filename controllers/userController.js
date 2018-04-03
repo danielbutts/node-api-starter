@@ -1,80 +1,47 @@
-const { getConnection } = require('../services/dbService');
+const userService = require('../services/userService');
 const logger = require('winston');
 const Joi = require('joi');
 
 const getUsers = async () => {
-  const connection = await getConnection();
-
-  try {
-    const result = await connection.query('SELECT * FROM users');
-    connection.release();
-    return result.rows;
-  } catch (error) {
-    connection.release();
-    logger.error('query error', error.message, error.stack);
-    throw error;
-  }
+  const users = await userService.getUsers();
+  return users;
 };
 
 const getUserById = async (userId) => {
-  const connection = await getConnection();
-  console.log('userId', userId, parseInt(userId, 10));
-  try {
-    if (Number.isNaN(userId)) throw new Error('UserId must be a number');
-    const result = await connection.query('SELECT * FROM users where id = $1 limit 1', [parseInt(userId, 10)]);
-    if (result.rows.length === 0) throw new Error(`User ${userId} not found.`);
-    connection.release();
-    return result.rows[0];
-  } catch (error) {
-    connection.release();
-    logger.error('query error', error.message, error.stack);
+  const schema = {
+    userId: Joi.string().alphanum().min(3).max(30)
+      .required(),
+  };
+  const { error, value: id } = Joi.validate({ userId }, schema);
+  if (error) {
+    logger.error(error.message);
     throw error;
   }
+
+  const user = await userService.getUserById(id);
+  return user;
 };
 
 const createUser = async (user) => {
   try {
     const schema = Joi.object().keys({
-      userId: Joi.string().alphanum().min(3).max(30)
+      username: Joi.string().alphanum().min(3).max(30)
         .required(),
       password: Joi.string().regex(/^[a-zA-Z0-9]{3,30}$/).required(),
       firstName: Joi.string().regex(/^[a-zA-Z]{3,30}$/).required(),
       lastName: Joi.string().regex(/^[a-zA-Z]{3,30}$/).required(),
       email: Joi.string().email(),
     })
-      .and('userId', 'password', 'firstName', 'lastName', 'email');
+      .and('username', 'password', 'firstName', 'lastName', 'email');
 
-    const validUser = await Joi.validate(user, schema, (err, value) => {
-      if (err) {
-        logger.error(err);
-        throw err;
-      }
-      return value;
-    });
+    const { error: err, value: validUser } = Joi.validate(user, schema);
+    if (err) throw err;
 
-    const connection = await getConnection();
+    const existingUser = await userService.getUserByName(validUser.username);
+    if (existingUser) throw new Error(`Username ${validUser.username} already exists.`);
 
-    const {
-      userId,
-      firstName,
-      lastName,
-      password,
-      email,
-    } = validUser;
-
-    try {
-      const result = await connection.query('INSERT INTO users(user_id, first_name, last_name, password, email) VALUES($1, $2, $3, $4, $5) RETURNING *', [userId,
-        firstName,
-        lastName,
-        password,
-        email]);
-      connection.release();
-      return result.rows[0];
-    } catch (error) {
-      connection.release();
-      logger.error('query error', error.message, error.stack);
-    }
-    return undefined;
+    const newUser = userService.createUser(user);
+    return newUser;
   } catch (err) {
     logger.error(err);
     throw err;
