@@ -70,7 +70,6 @@ const createUser = async (user) => {
 
   const { hash, salt } = authService.hashPassword(password);
 
-  console.log(username, firstName, lastName, password, hash, salt, email);
   try {
     const result = await connection.query('INSERT INTO users(username, first_name, last_name, password, salt, email) VALUES($1, $2, $3, $4, $5, $6) RETURNING *', [username,
       firstName,
