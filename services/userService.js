@@ -1,5 +1,6 @@
 const { getConnection } = require('../services/dbService');
 const logger = require('winston');
+const authService = require('../services/authService');
 
 const getUserByName = async (name) => {
   const connection = await getConnection();
@@ -67,11 +68,15 @@ const createUser = async (user) => {
     email,
   } = user;
 
+  const { hash, salt } = authService.hashPassword(password);
+
+  console.log(username, firstName, lastName, password, hash, salt, email);
   try {
-    const result = await connection.query('INSERT INTO users(username, first_name, last_name, password, email) VALUES($1, $2, $3, $4, $5) RETURNING *', [username,
+    const result = await connection.query('INSERT INTO users(username, first_name, last_name, password, salt, email) VALUES($1, $2, $3, $4, $5, $6) RETURNING *', [username,
       firstName,
       lastName,
-      password,
+      hash,
+      salt,
       email]);
     connection.release();
     return result.rows[0];
